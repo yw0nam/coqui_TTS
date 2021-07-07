@@ -163,6 +163,7 @@ class BaseTTS(BaseModel):
                 outputs_per_step=config.r if "r" in config else 1,
                 text_cleaner=config.text_cleaner,
                 compute_linear_spec=config.model.lower() == "tacotron",
+                comnpute_f0=config.get("compute_f0", False),
                 meta_data=data_items,
                 ap=ap,
                 characters=config.characters,
