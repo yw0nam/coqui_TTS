@@ -80,7 +80,9 @@ class BaseTacotron(BaseTTS):
 
     @staticmethod
     def _format_aux_input(aux_input: Dict) -> Dict:
-        return format_aux_input({"d_vectors": None, "speaker_ids": None}, aux_input)
+        if aux_input:
+            return format_aux_input({"d_vectors": None, "speaker_ids": None}, aux_input)
+        return None
 
     #############################
     # INIT FUNCTIONS
