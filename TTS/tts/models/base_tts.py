@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -95,6 +96,7 @@ class BaseTTS(BaseModel):
         d_vectors = batch[8]
         speaker_ids = batch[9]
         attn_mask = batch[10]
+        pitch = batch[11]
         max_text_length = torch.max(text_lengths.float())
         max_spec_length = torch.max(mel_lengths.float())
 
@@ -138,6 +140,7 @@ class BaseTTS(BaseModel):
             "max_text_length": float(max_text_length),
             "max_spec_length": float(max_spec_length),
             "item_idx": item_idx,
+            "pitch": pitch,
         }
 
     def get_data_loader(
@@ -158,12 +161,13 @@ class BaseTTS(BaseModel):
                 speaker_id_mapping = None
                 d_vector_mapping = None
 
-            # init dataloader
+            # init the dataset
             dataset = TTSDataset(
                 outputs_per_step=config.r if "r" in config else 1,
                 text_cleaner=config.text_cleaner,
                 compute_linear_spec=config.model.lower() == "tacotron",
-                comnpute_f0=config.get("compute_f0", False),
+                compute_f0=config.get("compute_f0", False),
+                f0_cache_path=config.get("f0_cache_path", None),
                 meta_data=data_items,
                 ap=ap,
                 characters=config.characters,
@@ -183,12 +187,20 @@ class BaseTTS(BaseModel):
                 else None,
             )
 
+            # compute phonemes and write to files.
             if config.use_phonemes and config.compute_input_seq_cache:
                 # precompute phonemes to have a better estimate of sequence lengths.
                 dataset.compute_input_seq(config.num_loader_workers)
             dataset.sort_items()
 
+            # compute pitch frames and write to files.
+            if config.compute_f0 and not os.path.exists(config.f0_cache_path):
+                dataset.compute_pitch(config.get("f0_cache_path", None), config.num_loader_workers)
+
+            # setup the sampler for DDP training
             sampler = DistributedSampler(dataset) if num_gpus > 1 else None
+
+            # setup the data loader
             loader = DataLoader(
                 dataset,
                 batch_size=config.eval_batch_size if is_eval else config.batch_size,
