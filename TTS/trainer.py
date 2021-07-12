@@ -655,9 +655,10 @@ class Trainer:
         else:
             batch_num_steps = int(len(self.train_loader.dataset) / self.config.batch_size)
         self.c_logger.print_train_start()
+        loader_start_time = time.time()
         for cur_step, batch in enumerate(self.train_loader):
-            loader_start_time = time.time()
             _, _ = self.train_step(batch, batch_num_steps, cur_step, loader_start_time)
+            loader_start_time = time.time()
         epoch_time = time.time() - epoch_start_time
         # Plot self.epochs_done Stats
         if self.args.rank == 0:
