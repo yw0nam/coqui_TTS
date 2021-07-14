@@ -187,15 +187,17 @@ class BaseTTS(BaseModel):
                 else None,
             )
 
-            # compute phonemes and write to files.
+            # compute phonemes and write to files
             if config.use_phonemes and config.compute_input_seq_cache:
                 # precompute phonemes to have a better estimate of sequence lengths.
                 dataset.compute_input_seq(config.num_loader_workers)
             dataset.sort_items()
 
-            # compute pitch frames and write to files.
-            if config.compute_f0 and not os.path.exists(config.f0_cache_path):
-                dataset.compute_pitch(config.get("f0_cache_path", None), config.num_loader_workers)
+            # compute pitch frames and write to files
+            if config.compute_f0:
+                if not os.path.exists(config.f0_cache_path):
+                    dataset.compute_pitch(config.get("f0_cache_path", None), config.num_loader_workers)
+                dataset.load_pitch_stats(config.get("f0_cache_path", None))
 
             # setup the sampler for DDP training
             sampler = DistributedSampler(dataset) if num_gpus > 1 else None
