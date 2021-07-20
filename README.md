@@ -72,6 +72,7 @@ Underlined "TTS*" and "Judy*" are 🐸TTS models
 - Glow-TTS: [paper](https://arxiv.org/abs/2005.11129)
 - Speedy-Speech: [paper](https://arxiv.org/abs/2008.03802)
 - Align-TTS: [paper](https://arxiv.org/abs/2003.01950)
+- FastSpeech: [paper](https://arxiv.org/pdf/1905.09263.pdf)
 
 ### Attention Methods
 - Guided Attention: [paper](https://arxiv.org/abs/1710.08969)
