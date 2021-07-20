@@ -62,6 +62,22 @@ class SpeedySpeechArgs(Coqpit):
     d_vector_dim: int = 0
 
 
+@dataclass
+class FastSpeechArgs(SpeedySpeechArgs):
+    """FastSpeech model arguments based on SpeecySpeech model
+    check {class}`SpeedySpeechArgs`for more info.
+    """
+    hidden_channels: int = 384
+    encoder_type: str = "fftransformer"
+    encoder_params: dict = field(
+        default_factory=lambda: {"hidden_channels_ffn": 1536, "num_heads": 2, "num_layers": 6, "dropout_p": 0.1}
+    )
+    decoder_type: str = "fftransformer"
+    decoder_params: dict = field(
+        default_factory=lambda: {"hidden_channels_ffn": 1536, "num_heads": 2, "num_layers": 6, "dropout_p": 0.1}
+    )
+
+
 class SpeedySpeech(BaseTTS):
     """Speedy Speech model
     https://arxiv.org/abs/2008.03802
@@ -121,7 +137,8 @@ class SpeedySpeech(BaseTTS):
             config.model_args.decoder_type,
             config.model_args.decoder_params,
         )
-        self.duration_predictor = DurationPredictor(config.model_args.hidden_channels + config.model_args.d_vector_dim)
+        self.duration_predictor = DurationPredictor(config.model_args.hidden_channels + config.model_args.d_vector_dim,
+                                                    config.model_args.hidden_channels)
 
         if config.model_args.num_speakers > 1 and not config.model_args.use_d_vector:
             # speaker embedding layer

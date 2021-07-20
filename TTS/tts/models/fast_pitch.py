@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
 import torch
-import torch.nn.functional as F
 from coqpit import Coqpit
 from torch import nn
 

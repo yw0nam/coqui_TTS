@@ -136,7 +136,7 @@ class AlignTTS(BaseTTS):
             config.model_args.decoder_type,
             config.model_args.decoder_params,
         )
-        self.duration_predictor = DurationPredictor(config.model_args.hidden_channels_dp)
+        self.duration_predictor = DurationPredictor(config.model_args.hidden_channels_dp, config.model_args.hidden_channels_dp)
 
         self.mod_layer = nn.Conv1d(config.model_args.hidden_channels, config.model_args.hidden_channels, 1)
 

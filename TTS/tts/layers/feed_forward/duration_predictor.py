@@ -14,16 +14,17 @@ class DurationPredictor(nn.Module):
     conv_BN_4x1 -> conv_BN_3x1 -> conv_BN_1x1 -> conv_1x1
 
     Args:
+        in_channels (int): number of input channels
         hidden_channels (int): number of channels in the inner layers.
     """
 
-    def __init__(self, hidden_channels):
+    def __init__(self, in_channels, hidden_channels):
 
         super().__init__()
 
         self.layers = nn.ModuleList(
             [
-                Conv1dBN(hidden_channels, hidden_channels, 4, 1),
+                Conv1dBN(in_channels, hidden_channels, 4, 1),
                 Conv1dBN(hidden_channels, hidden_channels, 3, 1),
                 Conv1dBN(hidden_channels, hidden_channels, 1, 1),
                 nn.Conv1d(hidden_channels, 1, 1),
