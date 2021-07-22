@@ -766,7 +766,18 @@ class Trainer:
     def test_run(self) -> None:
         """Run test and log the results. Test run must be defined by the model.
         Model must return figures and audios to be logged by the Tensorboard."""
+        self.model.eval()
         if hasattr(self.model, "test_run"):
+            if self.eval_loader is None:
+                self.eval_loader = (
+                    self.get_eval_dataloader(
+                        self.ap,
+                        self.data_eval,
+                        verbose=True,
+                    )
+                    if self.config.run_eval
+                    else None
+                )
             if hasattr(self.eval_loader.dataset, "load_test_samples"):
                 samples = self.eval_loader.dataset.load_test_samples(1)
                 figures, audios = self.model.test_run(self.ap, samples, None)
