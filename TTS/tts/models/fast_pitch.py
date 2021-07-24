@@ -734,7 +734,7 @@ class FastPitch(BaseTTS):
             "alignment": plot_alignment(align_img, output_fig=False),
         }
 
-        if self.args.use_aligner and self.training:
+        if self.config.model_args.use_aligner and self.training:
             alignment_mas = outputs["alignment_mas"]
             figures["alignment_mas"] = plot_alignment(alignment_mas, ap, output_fig=False)
 
