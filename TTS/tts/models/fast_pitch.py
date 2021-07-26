@@ -308,7 +308,7 @@ class FastPitch(BaseTTS):
         alignment_mas = maximum_path(
             alignment_soft.squeeze(1).transpose(1, 2).contiguous(), attn_mask.squeeze(1).contiguous()
         )
-        o_alignment_dur = torch.log(1 + torch.sum(alignment_mas, -1))
+        o_alignment_dur = torch.sum(alignment_mas, -1)
         return o_alignment_dur, alignment_logprob, alignment_mas
 
     def forward(
@@ -345,7 +345,7 @@ class FastPitch(BaseTTS):
             "pitch": o_pitch,
             "pitch_gt": avg_pitch,
             "alignments": attn,
-            "alignment_mas": alignment_mas,
+            "alignment_mas": alignment_mas.transpose(1, 2),
             "o_alignment_dur": o_alignment_dur,
             "alignment_logprob": alignment_logprob,
         }
