@@ -449,8 +449,8 @@ class FastPitch(BaseTTS):
         }
 
         if self.config.model_args.use_aligner and self.training:
-            alignment_mas = outputs["alignment_mas"]
-            figures["alignment_mas"] = plot_alignment(alignment_mas, ap, output_fig=False)
+            alignment_mas = outputs["alignment_mas"][0].data.cpu().numpy()
+            figures["alignment_mas"] = plot_alignment(alignment_mas, output_fig=False)
 
         # Sample audio
         train_audio = ap.inv_melspectrogram(pred_spec.T)
