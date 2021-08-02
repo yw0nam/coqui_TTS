@@ -538,6 +538,14 @@ class FastPitch(BaseTTS):
         if args.use_aligner:
             self.aligner = AlignmentEncoder(args.out_channels, args.hidden_channels)
 
+
+    def format_durations(self, o_dr_log, x_mask):
+        o_dr = (torch.exp(o_dr_log) - 1) * x_mask * self.length_scale
+        # o_dr[o_dr < 1] = 1.0
+        o_dr = o_dr.float()
+        o_dr_rounded = (o_dr + 0.5).long()
+        return o_dr_rounded
+
     @staticmethod
     def expand_encoder_outputs(en, dr, x_mask, y_mask):
         """Generate attention alignment map from durations and
@@ -595,8 +603,7 @@ class FastPitch(BaseTTS):
             alignment_mas = maximum_path(
                 alignment_soft.squeeze(1).transpose(1, 2).contiguous(), attn_mask.squeeze(1).contiguous()
             )
-            o_alignment_dur = torch.log(1 + torch.sum(alignment_mas, -1))
-            avg_pitch = average_pitch(pitch, o_alignment_dur)
+            o_alignment_dur = torch.sum(alignment_mas, -1)
             dr = o_alignment_dur
 
         # TODO: move this to the dataset
@@ -607,7 +614,6 @@ class FastPitch(BaseTTS):
         pitch_emb = self.pitch_emb(avg_pitch)
         o_en = o_en + pitch_emb.transpose(1, 2)
 
-        # len_regulated, dec_lens = regulate_len(dr, o_en, self.length_scale, mel_max_len)
         o_en_ex, attn = self.expand_encoder_outputs(o_en, dr, x_mask, y_mask)
 
         # Output FFT
@@ -620,7 +626,7 @@ class FastPitch(BaseTTS):
             "pitch": o_pitch,
             "pitch_gt": avg_pitch,
             "alignments": attn,
-            "alignment_mas": alignment_mas,
+            "alignment_mas": alignment_mas.transpose(1, 2),
             "o_alignment_dur": o_alignment_dur,
             "alignment_logprob": alignment_logprob,
         }
@@ -631,13 +637,14 @@ class FastPitch(BaseTTS):
         speaker_embedding = aux_input["d_vectors"] if "d_vectors" in aux_input else 0
 
         # input sequence should be greated than the max convolution size
-        inference_padding = 5
-        if x.shape[1] < 13:
-            inference_padding += 13 - x.shape[1]
+        # inference_padding = 5
+        # if x.shape[1] < 13:
+        #     inference_padding += 13 - x.shape[1]
 
         # pad input to prevent dropping the last word
-        x = torch.nn.functional.pad(x, pad=(0, inference_padding), mode="constant", value=0)
+        # x = torch.nn.functional.pad(x, pad=(0, inference_padding), mode="constant", value=0)
         x_lengths = torch.tensor(x.shape[1:2]).to(x.device)
+        x_mask = torch.unsqueeze(sequence_mask(x_lengths, x.shape[1]), 1).to(x.dtype)
 
         # character embedding
         embedding = self.emb(x)
@@ -653,8 +660,7 @@ class FastPitch(BaseTTS):
 
         # Predict durations
         o_dr_log = self.duration_predictor(o_en, mask_en)
-        o_dr = torch.clamp(torch.exp(o_dr_log) - 1, 0, self.max_duration)
-        o_dr = o_dr * self.length_scale
+        o_dr = self.format_durations(o_dr_log, x_mask).squeeze(1)
 
         # Pitch over chars
         o_pitch = self.pitch_predictor(o_en, mask_en).unsqueeze(1)
@@ -672,7 +678,6 @@ class FastPitch(BaseTTS):
         o_en = o_en + o_pitch_emb
 
         y_lengths = o_dr.sum(1)
-        x_mask = torch.unsqueeze(sequence_mask(x_lengths, x.shape[1]), 1).to(x.dtype)
         y_mask = torch.unsqueeze(sequence_mask(y_lengths, None), 1).to(x.dtype)
 
         o_en_ex, attn = self.expand_encoder_outputs(o_en, o_dr, x_mask, y_mask)
