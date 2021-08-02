@@ -738,10 +738,9 @@ class FastPitch(BaseTTS):
             "ground_truth": plot_spectrogram(gt_spec, ap, output_fig=False),
             "alignment": plot_alignment(align_img, output_fig=False),
         }
-
         if self.config.model_args.use_aligner and self.training:
-            alignment_mas = outputs["alignment_mas"]
-            figures["alignment_mas"] = plot_alignment(alignment_mas, ap, output_fig=False)
+            alignment_mas = outputs["alignment_mas"][0].data.cpu().numpy()
+            figures["alignment_mas"] = plot_alignment(alignment_mas, output_fig=False)
 
         # Sample audio
         train_audio = ap.inv_melspectrogram(pred_spec.T)

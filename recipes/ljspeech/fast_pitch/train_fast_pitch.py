@@ -16,8 +16,8 @@ dataset_config = BaseDatasetConfig(
 )
 audio_config = BaseAudioConfig(
     sample_rate=22050,
-    do_trim_silence=False,
-    trim_db=0.0,
+    do_trim_silence=True,
+    trim_db=60.0,
     signal_norm=False,
     mel_fmin=0.0,
     mel_fmax=8000,
@@ -47,7 +47,9 @@ config = FastPitchConfig(
     mixed_precision=False,
     output_path=output_path,
     datasets=[dataset_config],
+    use_espeak_phonemes=False,
 )
+
 
 # compute alignments
 if not config.model_args.use_aligner:
