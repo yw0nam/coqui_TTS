@@ -51,7 +51,7 @@ class GlowTTS(BaseTTS):
         super().__init__(config)
 
         self.speaker_manager = speaker_manager
-
+        self.inference_mode = None
         # pass all config fields to `self`
         # for fewer code change
         self.config = config
@@ -170,7 +170,10 @@ class GlowTTS(BaseTTS):
         if g is not None:
             if hasattr(self, "emb_g"):
                 # use speaker embedding layer
-                g = F.normalize(self.emb_g(g)).unsqueeze(-1)  # [b, h, 1]
+                if self.inference_mode:
+                    g = F.normalize(self.emb_g(g).unsqueeze(0)).unsqueeze(-1)  # [b, h, 1]
+                else:
+                     g = F.normalize(self.emb_g(g)).unsqueeze(-1)  # [b, h, 1]
             else:
                 # use d-vector
                 g = F.normalize(g).unsqueeze(-1)  # [b, h, 1]
@@ -307,6 +310,7 @@ class GlowTTS(BaseTTS):
     def inference(
         self, x, aux_input={"x_lengths": None, "d_vectors": None, "speaker_ids": None}
     ):  # pylint: disable=dangerous-default-value
+        self.inference_mode = True
         x_lengths = aux_input["x_lengths"]
         g = self._speaker_embedding(aux_input)
         # embedding pass
