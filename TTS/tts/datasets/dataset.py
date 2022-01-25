@@ -148,7 +148,7 @@ class TTSDataset(Dataset):
         data = np.load(filename).astype("float32")
         return data
 
-    @staticmethod
+    # @staticmethod
     def _generate_and_cache_phoneme_sequence(
         text, cache_path, cleaners, language, custom_symbols, characters, add_blank
     ):
@@ -645,3 +645,32 @@ class PitchExtractor:
         stats = np.load(stats_path, allow_pickle=True).item()
         self.mean = stats["mean"].astype(np.float32)
         self.std = stats["std"].astype(np.float32)
+
+
+class TTSDataset_for_jp(TTSDataset):
+    def _generate_and_cache_phoneme_sequence(
+        text, cache_path, cleaners, language, custom_symbols, characters, add_blank
+    ):
+        """generate a phoneme sequence from text.
+        since the usage is for subsequent caching, we never add bos and
+        eos chars here. Instead we add those dynamically later; based on the
+        config option."""
+        phonemes = phoneme_to_sequence(
+            text,
+            ['phoneme_cleaners'],
+            language='ja-jp',
+            enable_eos_bos=False,
+            custom_symbols=custom_symbols,
+            tp=  {
+                "pad": "_",
+                "eos": "~",
+                "bos": "^",
+                "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!'(),-.:;? ",
+                "punctuations": "!'(),-.:;? ",
+                "phonemes": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            },
+            add_blank=add_blank,
+        )
+        phonemes = np.asarray(phonemes, dtype=np.int32)
+        np.save(cache_path, phonemes)
+        return phonemes
