@@ -39,7 +39,7 @@ audio_config = BaseAudioConfig(
 config = VitsConfig(
     audio=audio_config,
     run_name="visual_novel_vits",
-    use_speaker_embedding=True,
+    # use_speaker_embedding=True,
     batch_size=32,
     eval_batch_size=16,
     batch_group_size=5,
@@ -48,7 +48,7 @@ config = VitsConfig(
     run_eval=True,
     test_delay_epochs=-1,
     epochs=1000,
-    text_cleaner="phoneme_cleaners",
+    text_cleaner="basic_cleaners",
     use_phonemes=False,
     use_espeak_phonemes=False,
     phoneme_language="ja-jp",
@@ -62,7 +62,7 @@ config = VitsConfig(
     },
     # phoneme_cache_path=os.path.join(output_path, "phoneme_cache"),
     # compute_input_seq_cache=True,
-    print_step=25,
+    print_step=100,
     print_eval=False,
     mixed_precision=True,
     sort_by_audio_len=True,
@@ -81,7 +81,7 @@ train_samples, eval_samples = load_tts_samples(dataset_config, eval_split=True, 
 # speaker_manager.set_speaker_ids_from_data(train_samples + eval_samples)
 # config.num_speakers = speaker_manager.num_speakers
 # %%
-model = Vits(config, speaker_manager=None)
+model = Vits(config)
 # %%
 trainer = Trainer(
     TrainingArgs(),
