@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from phonemizer import phonemize
 from TTS.tts.utils.text import text2phone
 # %%
-csv = pd.read_csv('./data/data_voice.path_exist.csv')
+csv = pd.read_csv('../data/data_voice.path_exist.csv')
 names = csv['name'].value_counts().loc[csv['name'].value_counts()>900].index
 csv = csv.query("name in @names")
 # %%
@@ -50,6 +50,11 @@ csv = csv.query("index not in @idx")
 csv['length'] = csv['romazi_text'].map(lambda x: len(x))
 # %%
 csv_temp = csv.query("length >= 10")
+# %%
+csv_temp = csv_temp.loc[~csv_temp['normalized_text'].map(lambda x: "%" in x)]
+csv_temp = csv_temp.loc[~csv_temp['normalized_text'].map(lambda x: "「" in x)]
+csv_temp = csv_temp.loc[~csv_temp['normalized_text'].map(lambda x: ";" in x)]
+csv_temp['normalized_text'] = csv_temp['normalized_text'].map(lambda x: x.replace("●", "ん"))
 # %%
 train, val = train_test_split(csv_temp, test_size=500, random_state=1004, stratify=csv_temp['name'])
 

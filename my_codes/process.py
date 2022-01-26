@@ -10,14 +10,16 @@ from TTS.tts.datasets import load_tts_samples
 from TTS.tts.models.forward_tts import ForwardTTS
 from TTS.tts.utils.speakers import SpeakerManager
 from TTS.utils.audio import AudioProcessor
+import cutlet
 from TTS.tts.utils.text import pad_with_eos_bos, phoneme_to_sequence, text_to_sequence, sequence_to_text, text2phone
 # %%
 output_path = os.path.join("/home/spow12/codes/TTS/coqui_TTS/", "experiment")
 # %%
 def formatter(root_path, meta_file_train):
     temp = pd.read_csv(os.path.join(root_path, meta_file_train), sep='|')
-    return list(zip(temp['normalized_text'], temp['path'], temp['name']))
-# %%
+    katsu = cutlet.Cutlet()
+    temp['romazi_text'] = temp['normalized_text'].map(lambda x: katsu.slug(x))
+    return list(zip(temp['romazi_text'], temp['path'], temp['name']))
 
 
 # %%
@@ -49,8 +51,8 @@ config = FastSpeechConfig(
     run_eval=True,
     test_delay_epochs=-1,
     epochs=1000,
-    text_cleaner=["phoneme_cleaners"],
-    use_phonemes=True,
+    text_cleaner="basic_cleaners",
+    use_phonemes=False,
     use_espeak_phonemes=False,
     phoneme_language="ja-jp",
     characters={
@@ -103,6 +105,7 @@ speaker_manager = SpeakerManager()
 speaker_manager.set_speaker_ids_from_data(train_samples + eval_samples)
 config.num_speakers = speaker_manager.num_speakers
 # %%
+train_samples[0]
 # class TTSDataset_for_jp(TTSDataset):
 #     def _generate_and_cache_phoneme_sequence(
 #         text, cache_path, cleaners, language, custom_symbols, characters, add_blank
@@ -133,7 +136,7 @@ config.num_speakers = speaker_manager.num_speakers
 # %%
 dataset = TTSDataset(
     outputs_per_step=config.r if "r" in config else 1,
-    text_cleaner="phoneme_cleaners",
+    text_cleaner=config.text_cleaner,
     compute_linear_spec=config.model.lower() == False,
     compute_f0=config.get("compute_f0", False),
     f0_cache_path=config.get("f0_cache_path", None),
@@ -155,30 +158,29 @@ dataset = TTSDataset(
     d_vector_mapping=None
 )
 # %%
+katsu = cutlet.Cutlet()
+katsu.slug(train_samples[0][0])
+# %%
 data = dataset.load_data(2550)
 # %%
-train_samples[0]
-# %%
-temp = np.load("../experiment/phoneme_cache/kan006_024_phoneme.npy")
-# %%
-# %%
-sequence_to_text(temp)
+data
+sequence_to_text(data['text'])
 # %%
 i = 2
 phonemes = phoneme_to_sequence(
             data['raw_text'],
-            ['phoneme_cleaners'],
+            ['basic_cleaners'],
             language='ja-jp',
             enable_eos_bos=False,
             # custom_symbols=custom_symbols,
-            # tp=  {
-            #     "pad": "_",
-            #     "eos": "~",
-            #     "bos": "^",
-            #     "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!'(),-.:;? ",
-            #     "punctuations": "!'(),-.:;? ",
-            #     "phonemes": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-            # },
+            tp=  {
+                "pad": "_",
+                "eos": "~",
+                "bos": "^",
+                "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!'(),-.:;? ",
+                "punctuations": "!'(),-.:;? ",
+                "phonemes": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            },
             add_blank=False,
         )
 # %%
