@@ -176,6 +176,13 @@ def main():
         help="If true save raw spectogram for further (vocoder) processing in out_path.",
         default=False,
     )
+    parser.add_argument(
+        "--visual_novel",
+        type=bool,
+        help="for inference glow tts",
+        default=False,
+    )
+
 
     args = parser.parse_args()
 
@@ -232,6 +239,7 @@ def main():
         encoder_path,
         encoder_config_path,
         args.use_cuda,
+        visual_novel=args.visual_novel
     )
 
     # query speaker ids of a multi-speaker model.

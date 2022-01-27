@@ -1,6 +1,6 @@
 import os
 from typing import Dict
-
+import cutlet
 import numpy as np
 import pkg_resources
 import torch
@@ -71,6 +71,7 @@ def run_model_torch(
     speaker_id: int = None,
     style_mel: torch.Tensor = None,
     d_vector: torch.Tensor = None,
+    visual_novel: bool = None
 ) -> Dict:
     """Run a torch model for inference. It does not support batch inference.
 
@@ -95,7 +96,7 @@ def run_model_torch(
             "x_lengths": input_lengths,
             "speaker_ids": speaker_id,
             "d_vectors": d_vector,
-            "style_mel": style_mel,
+            "style_mel": style_mel
         },
     )
     return outputs
@@ -209,6 +210,7 @@ def synthesis(
     do_trim_silence=False,
     d_vector=None,
     backend="torch",
+    visual_novel=None
 ):
     """Synthesize voice for the given text using Griffin-Lim vocoder or just compute output features to be passed to
     the vocoder model.
@@ -258,6 +260,9 @@ def synthesis(
     if hasattr(model, "make_symbols"):
         custom_symbols = model.make_symbols(CONFIG)
     # preprocess the given text
+    if CONFIG.phoneme_language == "ja-jp":
+        katsu = cutlet.Cutlet()
+        text = katsu.slug(text)
     text_inputs = text_to_seq(text, CONFIG, custom_symbols=custom_symbols)
     # pass tensors to backend
     if backend == "torch":
@@ -278,7 +283,7 @@ def synthesis(
         text_inputs = tf.expand_dims(text_inputs, 0)
     # synthesize voice
     if backend == "torch":
-        outputs = run_model_torch(model, text_inputs, speaker_id, style_mel, d_vector=d_vector)
+        outputs = run_model_torch(model, text_inputs, speaker_id, style_mel, d_vector=d_vector, visual_novel=visual_novel)
         model_outputs = outputs["model_outputs"]
         model_outputs = model_outputs[0].data.cpu().numpy()
         alignments = outputs["alignments"]

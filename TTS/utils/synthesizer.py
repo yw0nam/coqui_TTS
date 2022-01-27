@@ -28,6 +28,7 @@ class Synthesizer(object):
         encoder_checkpoint: str = "",
         encoder_config: str = "",
         use_cuda: bool = False,
+        visual_novel: bool = False
     ) -> None:
         """General 🐸 TTS interface for inference. It takes a tts and a vocoder
         model and synthesize speech from the provided text.
@@ -57,7 +58,7 @@ class Synthesizer(object):
         self.encoder_checkpoint = encoder_checkpoint
         self.encoder_config = encoder_config
         self.use_cuda = use_cuda
-
+        self.visual_novel = visual_novel
         self.tts_model = None
         self.vocoder_model = None
         self.speaker_manager = None
@@ -238,6 +239,7 @@ class Synthesizer(object):
                 enable_eos_bos_chars=self.tts_config.enable_eos_bos_chars,
                 use_griffin_lim=use_gl,
                 d_vector=speaker_embedding,
+                visual_novel=self.visual_novel
             )
             waveform = outputs["wav"]
             mel_postnet_spec = outputs["outputs"]["model_outputs"][0].detach().cpu().numpy()
@@ -263,7 +265,7 @@ class Synthesizer(object):
             if self.use_cuda and not use_gl:
                 waveform = waveform.cpu()
             if not use_gl:
-                waveform = waveform.numpy()
+                waveform = waveform.detach().numpy()
             waveform = waveform.squeeze()
 
             # trim silence
