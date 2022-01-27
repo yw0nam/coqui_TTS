@@ -3,18 +3,24 @@
 
 import argparse
 import glob
-import os
+import os, cutlet
 
 import numpy as np
 from tqdm import tqdm
-
+import pandas as pd
 # from TTS.utils.io import load_config
 from TTS.config import load_config
 from TTS.tts.datasets import load_tts_samples
 from TTS.utils.audio import AudioProcessor
 
+def formatter(root_path, meta_file_train):
+    temp = pd.read_csv(os.path.join(root_path, meta_file_train), sep='|')
+    katsu = cutlet.Cutlet()
+    temp['romazi_text'] = temp['normalized_text'].map(lambda x: katsu.slug(x))
+    return list(zip(temp['romazi_text'], temp['path'], temp['name']))
 
 def main():
+    
     """Run preprocessing process."""
     parser = argparse.ArgumentParser(description="Compute mean and variance of spectrogtram features.")
     parser.add_argument("config_path", type=str, help="TTS config file path to define audio processin parameters.")
@@ -41,7 +47,7 @@ def main():
     if args.data_path:
         dataset_items = glob.glob(os.path.join(args.data_path, "**", "*.wav"), recursive=True)
     else:
-        dataset_items = load_tts_samples(CONFIG.datasets)[0]  # take only train data
+        dataset_items = load_tts_samples(CONFIG.datasets, eval_split=True, formatter=formatter)[0]  # take only train data
     print(f" > There are {len(dataset_items)} files.")
 
     mel_sum = 0
