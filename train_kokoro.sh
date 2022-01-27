@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES="0" python TTS/bin/train_tts.py --config_path /home/spow12/codes/TTS/coqui_TTS/recipes/kokoro/tacotron2-DDC/tacotron2-DDC.json

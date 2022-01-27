@@ -1,5 +1,5 @@
-import os
-
+import os, cutlet
+import pandas as pd
 from TTS.config import load_config, register_config
 from TTS.trainer import Trainer, TrainingArgs
 from TTS.tts.datasets import load_tts_samples
@@ -7,6 +7,11 @@ from TTS.tts.models import setup_model
 from TTS.tts.utils.speakers import SpeakerManager
 from TTS.utils.audio import AudioProcessor
 
+def formatter(root_path, meta_file_train):
+    temp = pd.read_csv(os.path.join(root_path, meta_file_train), sep='|')
+    katsu = cutlet.Cutlet()
+    temp['romazi_text'] = temp['normalized_text'].map(lambda x: katsu.slug(x))
+    return list(zip(temp['romazi_text'], temp['path'], temp['name']))
 
 def main():
     """Run `tts` model training directly by a `config.json` file."""
@@ -39,7 +44,7 @@ def main():
             config = register_config(config_base.model)()
 
     # load training samples
-    train_samples, eval_samples = load_tts_samples(config.datasets, eval_split=True)
+    train_samples, eval_samples = load_tts_samples(config.datasets, eval_split=True, formatter=formatter)
 
     # setup audio processor
     ap = AudioProcessor(**config.audio)

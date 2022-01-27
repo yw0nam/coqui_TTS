@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES="0" python TTS/bin/train_tts.py --config_path train_code/configs/tacotron2-DDC.json 
